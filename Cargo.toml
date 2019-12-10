@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 reformation = "0.5"
 itertools = "0.8"
+num = "0.2"
