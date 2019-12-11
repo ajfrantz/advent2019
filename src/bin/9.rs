@@ -1,4 +1,26 @@
-use advent2019::intcode::Intcode;
+use advent2019::intcode::{Intcode, IO};
+
+struct HumanIO;
+
+impl IO for HumanIO {
+    fn input(&mut self) -> i64 {
+        println!("Input required.");
+        loop {
+            let mut input = String::new();
+            std::io::stdin()
+                .read_line(&mut input)
+                .expect("input required");
+            if let Ok(n) = input.trim().parse::<i64>() {
+                return n;
+            }
+            println!("Invalid integer, try again.");
+        }
+    }
+
+    fn output(&mut self, v: i64) {
+        println!("{}", v);
+    }
+}
 
 fn main() {
     let ram = vec![
@@ -53,22 +75,5 @@ fn main() {
         1, 968, 22101, 0, -2, -2, 109, -3, 2106, 0, 0,
     ];
 
-    Intcode::new(
-        ram,
-        || {
-            println!("Input required.");
-            loop {
-                let mut input = String::new();
-                std::io::stdin()
-                    .read_line(&mut input)
-                    .expect("input required");
-                if let Ok(n) = input.trim().parse::<i64>() {
-                    return n;
-                }
-                println!("Invalid integer, try again.");
-            }
-        },
-        |v| println!("{}", v),
-    )
-    .run();
+    Intcode::new(ram, &mut HumanIO).run();
 }

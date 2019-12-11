@@ -1,15 +1,18 @@
 use std::convert::TryFrom;
 
-pub struct Intcode<I, O>
+pub trait IO {
+    fn input(&mut self) -> i64;
+    fn output(&mut self, v: i64);
+}
+
+pub struct Intcode<'a, T>
 where
-    I: FnMut() -> i64,
-    O: FnMut(i64),
+    T: IO,
 {
     pc: usize,
     ram: Vec<i64>,
     relative_base: i64,
-    input: I,
-    output: O,
+    io: &'a mut T,
 }
 
 struct RawWords {
@@ -98,18 +101,16 @@ enum Instruction {
     Halt,
 }
 
-impl<I, O> Intcode<I, O>
+impl<'a, T> Intcode<'a, T>
 where
-    I: FnMut() -> i64,
-    O: FnMut(i64),
+    T: IO,
 {
-    pub fn new(ram: Vec<i64>, input: I, output: O) -> Intcode<I, O> {
+    pub fn new(ram: Vec<i64>, io: &'a mut T) -> Intcode<'a, T> {
         Intcode {
             pc: 0,
             ram,
             relative_base: 0,
-            input,
-            output,
+            io,
         }
     }
 
@@ -129,13 +130,13 @@ where
                     self.pc += 4;
                 }
                 Instruction::Input { dest } => {
-                    let value = (self.input)();
+                    let value = self.io.input();
                     self.write(dest, value);
                     self.pc += 2;
                 }
                 Instruction::Output { from } => {
                     let value = self.read(from);
-                    (self.output)(value);
+                    self.io.output(value);
                     self.pc += 2;
                 }
                 Instruction::JumpIfTrue { condition, target } => {
